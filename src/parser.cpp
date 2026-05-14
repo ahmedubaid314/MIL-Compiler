@@ -21,7 +21,6 @@ Token Parser::scan_token() {
     return m_tokens->at(m_index++);
 }
 
-
 std::unique_ptr<expr_node> Parser::parse_EXPR() {
     return parse_AEXPR();
 }
@@ -110,12 +109,10 @@ std::unique_ptr<stmt_node> Parser::parse_STMT() {
         expect_token(TokenType::RPAREN);
         expect_token(TokenType::_SEMICOLON);
         return std::make_unique<print_stmt_node>(std::move(value));
-    }
-    else {
+    } else {
         std::cerr << "PARSE ERROR:\nExpected Kill or Let Tokens" << std::endl;
         exit(1);
     }
-
 }
 
 stmt_list Parser::parse_STMT_LIST() {
@@ -138,8 +135,6 @@ stmt_list Parser::parse_STMT_LIST() {
     return list;
 }
 
-
-
 Token Parser::expect_token(const TokenType t) {
     Token st = scan_token();
     if (st.type != t) {
@@ -156,4 +151,3 @@ std::optional<TokenType> Parser::peek_type() {
 
     return m_tokens->at(m_index).type;
 }
-

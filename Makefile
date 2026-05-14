@@ -30,7 +30,7 @@ CXX := g++
 CXXFLAGS := -std=c++20 -Wall -Wextra -I$(INCLUDE_DIR)
 
 # Source files
-SOURCES := main.cpp $(SRC_DIR)/scanner.cpp $(SRC_DIR)/parser.cpp
+SOURCES := main.cpp $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS := $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(notdir $(SOURCES)))
 COMPILER_EXEC := $(BUILD_DIR)/compiler
 
@@ -59,15 +59,14 @@ help:
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
-# Compile C++ sources to object files
-$(BUILD_DIR)/main.o: main.cpp | $(BUILD_DIR)
+# Compile root-level cpp files
+$(BUILD_DIR)/%.o: %.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/scanner.o: $(SRC_DIR)/scanner.cpp | $(BUILD_DIR)
+# Compile src/*.cpp files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/parser.o: $(SRC_DIR)/parser.cpp | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Link compiler executable
 $(COMPILER_EXEC): $(OBJECTS) | $(BUILD_DIR)
