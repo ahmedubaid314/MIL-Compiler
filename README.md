@@ -3,18 +3,18 @@
 > A high-performance compiler for the MIL (Minimal Intermediate Language) programming language, written in C++20.
 
 [![C++](https://img.shields.io/badge/C%2B%2B-20-blue?logo=cplusplus)](https://isocpp.org/)
-[![CMake](https://img.shields.io/badge/CMake-3.10%2B-064687?logo=cmake)](https://cmake.org/)
+[![Make](https://img.shields.io/badge/Make-Supported-064687)](https://www.gnu.org/software/make/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ## 📋 Requirements
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| **CMake** | 3.10+ | Build configuration |
-| **C++ Compiler** | C++20 | Compilation (GCC 7.0+, Clang 5.0+, or MSVC 2017+) |
-| **Make** | Any | Build execution (Linux) |
+| **C++ Compiler** | C++20 | Compilation (GCC 9.0+, Clang 10.0+, or MSVC 2019+) |
+| **Make** | Any | Build execution |
 | **NASM** | Any | Assembly to machine code |
-| **GoLink** | Any | Linker (Windows, for generated objects) |
+| **ld** | Any | Linker (Linux) |
+| **GoLink** | Any | Linker (Windows, optional) |
 
 ### ⚙️ Installation
 
@@ -22,170 +22,152 @@
 <summary><b>Ubuntu/Debian</b></summary>
 
 ```bash
-sudo apt-get install cmake build-essential nasm
+sudo apt-get install build-essential nasm
 ```
 </details>
 
 <details>
-<summary><b>Windows</b></summary>
+<summary><b>macOS</b></summary>
 
-1. Download and install [CMake](https://cmake.org/download/)
-2. Download and install [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/)
-3. Download and install [NASM](https://www.nasm.us/)
-4. Download **GoLink** (linker) and add it to your `PATH`
+```bash
+brew install nasm
+# Xcode command-line tools should already be installed
+```
+</details>
 
-   - Download: https://www.godevtool.com/GolinkHelp/ (make sure you can locate `golink.exe`)
-   - Add the folder containing `golink.exe` to your user or system `PATH`
-   - Verify in **PowerShell**:
+<details>
+<summary><b>Windows (MSYS2/Git Bash)</b></summary>
 
-     ```powershell
-     golink /?
-     ```
+1. Install [MSYS2](https://www.msys2.org/)
+2. Open MSYS2 terminal and run:
+   ```bash
+   pacman -S mingw-w64-x86_64-toolchain mingw-w64-x86_64-nasm
+   ```
+3. (Optional) Install **GoLink** for linking and add to PATH
 </details>
 
 ## 🚀 Quick Start
 
 ### Build Instructions
 
-#### Linux (Ubuntu/Debian)
-
 ```bash
 # Clone the repository
 git clone <repository-url> && cd MIL
 
-# Create and enter build directory
-mkdir build && cd build
-
-# Configure with CMake
-cmake ..
-
-# Build the project
+# Build the compiler
 make
+
+# View available targets
+make help
 ```
 
-#### Windows (PowerShell)
-
-Run from a **Developer PowerShell for VS** (or any shell where MSVC is available):
-
-```powershell
-# Clone the repository
-git clone <repository-url>
-cd MIL
-
-# Configure + build (multi-config generators like Visual Studio)
-cmake -S . -B build
-cmake --build build --config Release
-```
-
-The compiled executable will be generated in `build/` (on Windows with Visual Studio generators it is typically under `build/Release/`).
+The compiled executable will be at `build/compiler`.
 
 ## 💻 Usage
 
 Run the compiler with a MIL source file:
 
 ```bash
-./compiler <path-to-file.mil>
+./build/compiler <path-to-file.mil>
 ```
 
-On Windows (PowerShell):
-
-```powershell
-.\compiler.exe <path-to-file.mil>
+You can also copy the executable elsewhere:
+```bash
+cp build/compiler /usr/local/bin/
+compiler <file.mil>
 ```
 
 ### Example:
 ```bash
-./compiler ../dummy.mil
+./build/compiler test.mil
 ```
 
-The compiler will parse your MIL code and generate assembly output.
+**Note:** The compiler generates assembly and executables in a `target/` directory. This directory is created automatically for each compilation.
 
 ## ✅ How To Test (Current Project Stage)
 
-At the current stage, the simplest way to validate behavior is:
-
-1. Run the compiled program.
-2. Check the process **exit code** (0 usually means success; non-zero means an error occurred).
+The compiler generates an executable (`prog`) in the `target/` directory. For now, validation is done via:
 
 ### Linux
-
 ```bash
-./compiler ../dummy.mil
+./build/compiler test.mil
+./target/prog
 echo $?
 ```
 
-### Windows (PowerShell)
-
-```powershell
-.\compiler.exe ..\dummy.mil
-$LASTEXITCODE
+### Windows
+```bash
+.\build\compiler.exe test.mil
+.\target\prog.exe
+echo $LASTEXITCODE
 ```
+
+The exit code indicates the result of the last arithmetic expression computed.
 
 ## 📁 Project Structure
 
 ```
 MIL/
-├── 📄 main.cpp              # Entry point
+├── 📄 main.cpp                 # Entry point
 ├── 📂 src/
-│   ├── scanner.cpp          # Lexical analyzer (tokenization)
-│   └── parser.cpp           # Syntax analyzer (AST generation)
+│   ├── scanner.cpp             # Lexical analyzer (tokenization)
+│   ├── parser.cpp              # Syntax analyzer (AST generation)
+│   └── codegen.cpp             # Code generation (AST → assembly)
 ├── 📂 include/
-│   ├── scanner.h            # Scanner interface
-│   ├── parser.h             # Parser interface
-│   └── ast.h                # AST definitions
-├── 📂 docs/                 # Documentation
-├── 📋 CMakeLists.txt        # Build configuration
-├── 🧪 dummy.mil             # Example input file
-└── 📝 README.md             # This file
+│   ├── scanner.h               # Scanner interface
+│   ├── parser.h                # Parser interface
+│   ├── types.h                 # Token type definitions
+│   └── ast/
+│       ├── expr_node.h         # Expression AST nodes
+│       └── stmt_node.h         # Statement AST nodes
+├── 📂 runtime/
+│   └── linux/
+│       └── print_int_linux.asm # Linux runtime for print
+├── 📂 docs/                    # Language documentation
+├── 📂 target/                  # Generated assembly & executables (auto-created)
+├── 📄 Makefile                 # Build configuration
+├── 🧪 test.mil                 # Example MIL program
+└── 📝 README.md                # This file
 ```
 
 ## ✨ Features
 
-- **Lexical Analysis** - Tokenizes MIL source code
-- **Syntax Analysis** - Builds an Abstract Syntax Tree (AST)
+- **Lexical Analysis** - Tokenizes MIL source code using a DFA-based scanner
+- **Syntax Analysis** - Builds an Abstract Syntax Tree (AST) via recursive descent parser
 - **Code Generation** - Generates x86-64 assembly output
-
-## 🔨 Build Configurations
-
-### Debug Build
-```bash
-mkdir cmake-build-debug && cd cmake-build-debug
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-make
-```
-
-### Release Build (Optimized)
-```bash
-mkdir cmake-build-release && cd cmake-build-release
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
-```
+- **Cross-Platform** - Supports Linux, macOS, and Windows
 
 ## 🧹 Clean Build Artifacts
 
 ```bash
-rm -rf build/ cmake-build-debug/ cmake-build-release/
+# Remove build directory
+make clean
+
+# Also remove generated target files
+rm -rf target/
 ```
 
 ## 📝 Input File Requirements
 
 - Files must use the `.mil` extension
 - Must conform to MIL language syntax (see `docs/grammar.md`)
+- Integers must be 32-bit signed values (no leading zeros)
 
 ## 🐛 Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| `CMake not found` | Ensure CMake is installed and in your system PATH |
-| `Compiler not found` | Install a C++17 compatible compiler (GCC, Clang, or MSVC) |
-| `Build fails` | Try a clean rebuild: `rm -rf build/ && mkdir build && cd build && cmake .. && make` |
+| `make: command not found` | Install GNU Make via your package manager |
+| `g++: command not found` | Install a C++20 compiler (GCC 9+, Clang 10+, or MSVC) |
+| `nasm: command not found` | Install NASM for assembly compilation |
+| `Build fails on link` | Ensure `ld` (Linux) or appropriate linker is installed |
 
 ## 📚 Documentation
 
 Learn more about the MIL language:
 - [Grammar](docs/grammar.md) - Language syntax rules
 - [Keywords](docs/keywords.txt) - Reserved keywords
-- [Regex Patterns](docs/regex.md) - Pattern definitions
+- [Regex Patterns](docs/regex.md) - Token pattern definitions
 - [Alphabet](docs/alphabet.txt) - Character set
 
 ## 📜 License
