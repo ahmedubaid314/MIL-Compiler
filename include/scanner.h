@@ -1,33 +1,12 @@
 #pragma once
 
+#include "types.h"
 #include <iostream>
 #include <string>
 #include <vector>
 
 #define DFA_MAX_STATES 4
 #define DFA_MAX_ALPHABET 71
-
-enum class TokenType {
-    _KILL,
-    LPAREN,
-    RPAREN,
-    INT_LIT,
-    _SEMICOLON,
-    _EQUALS,
-    _IDENTIFIER,
-    _LET,
-    _PLUS,
-    _MINUS,
-    _MULT,
-    _DIV,
-    _PRINT,
-    _EOF
-};
-
-struct Token {
-    TokenType type;
-    std::string contents; // stores data if required, else NULL
-};
 
 inline std::ostream &operator<<(std::ostream &os, TokenType t) {
     switch (t) {
@@ -84,7 +63,7 @@ class Scanner {
                       const int last_accept_state) const;
 
     // checks if extracted string is a particular token
-    TokenType isKeyword(const std::string& identifier) const;
+    TokenType isKeyword(const std::string &identifier) const;
 
-    bool fitsInt32(const std::string& number) const;
+    bool fitsInt32(const std::string &number) const;
 };

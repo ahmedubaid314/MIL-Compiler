@@ -1,12 +1,12 @@
 #pragma once
+#include "types.h"
+#include <iostream>
 #include <memory>
 #include <unordered_map>
-
 
 struct expr_node {
     virtual ~expr_node() = default;
 };
-
 
 struct int_literal_node : expr_node {
     int value;
@@ -23,29 +23,33 @@ struct ident_node : expr_node {
 struct binary_expr_node : expr_node {
     TokenType _operator;
     std::unique_ptr<expr_node> left, right;
-    explicit binary_expr_node(TokenType o, std::unique_ptr<expr_node> l, std::unique_ptr<expr_node> r) : _operator(o), left(std::move(l)), right(std::move(r)) {}
+    explicit binary_expr_node(TokenType o, std::unique_ptr<expr_node> l,
+                              std::unique_ptr<expr_node> r)
+        : _operator(o), left(std::move(l)), right(std::move(r)) {}
 };
 
+inline void codegen_expr_node(std::ostream &out,
+                              std::unique_ptr<expr_node> &expr,
+                              std::unordered_map<std::string, int> &var_table) {
 
-inline void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node>& expr, std::unordered_map<std::string, int>& var_table) {
-
-    if (auto int_node = dynamic_cast<int_literal_node*>(expr.get())) {
+    if (auto int_node = dynamic_cast<int_literal_node *>(expr.get())) {
         out << "    mov rax, " << int_node->value << std::endl;
         return;
     }
 
-    if (auto ident = dynamic_cast<ident_node* >(expr.get())) {
+    if (auto ident = dynamic_cast<ident_node *>(expr.get())) {
         if (var_table.find(ident->name) == var_table.end()) {
-            std::cerr << "Variable " << ident->name << " not declared" << std::endl;
+            std::cerr << "Variable " << ident->name << " not declared"
+                      << std::endl;
             exit(EXIT_FAILURE);
         }
 
-        int ident_offset = -8 *(var_table.at(ident->name) + 1);
-        out << "    mov rax, [rbp " << ident_offset <<"]\n";
+        int ident_offset = -8 * (var_table.at(ident->name) + 1);
+        out << "    mov rax, [rbp " << ident_offset << "]\n";
         return;
     }
 
-    if (auto bin = dynamic_cast<binary_expr_node*>(expr.get())) {
+    if (auto bin = dynamic_cast<binary_expr_node *>(expr.get())) {
         codegen_expr_node(out, bin->right, var_table);
         out << "    PUSH rax\n";
 
@@ -62,10 +66,7 @@ inline void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node>& exp
             out << "    IDIV rbx\n";
         }
     }
-
-
 }
-
 
 struct stmt_node {
     virtual ~stmt_node() = default;
@@ -93,7 +94,6 @@ struct killstmt_node : stmt_node {
         out << "    mov rax, 60\n";
         out << "    SYSCALL\n";
 #endif
-
     }
 };
 
@@ -118,25 +118,22 @@ struct decl_stmt_node : stmt_node {
 
         codegen_expr_node(out, expr, var_table);
         out << "    mov [rbp " << offset << "], rax\n";
-
     }
 };
-
 
 struct assign_stmt_node : stmt_node {
     std::string name;
     std::unique_ptr<expr_node> expr;
 
     explicit assign_stmt_node(std::string n, std::unique_ptr<expr_node> e)
-         : name(std::move(n)), expr(std::move(e)) {}
+        : name(std::move(n)), expr(std::move(e)) {}
 
     void codegen(std::ostream &out,
                  std::unordered_map<std::string, int> &var_table,
                  int &var_count) override {
 
         if (var_table.find(name) == var_table.end()) {
-            std::cerr << "Variable " << name << " is not defined"
-                      << std::endl;
+            std::cerr << "Variable " << name << " is not defined" << std::endl;
             exit(1);
         }
 
@@ -145,19 +142,19 @@ struct assign_stmt_node : stmt_node {
 
         codegen_expr_node(out, expr, var_table);
         out << "    mov [rbp " << offset << "], rax\n";
-
     }
-
 };
 
 struct print_stmt_node : stmt_node {
     std::unique_ptr<expr_node> expr;
 
-    explicit print_stmt_node(std::unique_ptr<expr_node> e) : expr(std::move(e)) {}
+    explicit print_stmt_node(std::unique_ptr<expr_node> e)
+        : expr(std::move(e)) {}
 
-    void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count) override {
+    void codegen(std::ostream &out,
+                 std::unordered_map<std::string, int> &var_table,
+                 int &var_count) override {
         codegen_expr_node(out, expr, var_table);
         out << "    CALL print_int\n";
     }
 };
-
