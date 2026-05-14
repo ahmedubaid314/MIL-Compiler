@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -9,6 +10,8 @@
 #include "include/scanner.h"
 
 #include <unordered_map>
+
+namespace fs = std::filesystem;
 
 int main(int argc, char *argv[]) {
     if (argc == 1) {
@@ -59,7 +62,9 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
-    std::ofstream asm_file("prog.asm");
+    fs::create_directory("target");
+
+    std::ofstream asm_file("target/prog.asm");
 
 #ifdef _WIN32
     asm_file << "extern ExitProcess\n";
@@ -86,14 +91,30 @@ int main(int argc, char *argv[]) {
     asm_file.close();
 
 #ifdef _WIN32
-    int ret = system("nasm -f win64 prog.asm");
+    int ret1 = system("nasm -f win64 runtime/windows/print_int_windows.asm -o "
+                      "build/print_int.obj");
+    if (ret1 != 0) {
+        std::cerr << "NASM assembling of Print Int failed" << std::endl;
+        exit(1);
+    }
+#else
+    int ret1 = system(
+        "nasm -felf64 runtime/linux/print_int_linux.asm -o build/print_int.o");
+    if (ret1 != 0) {
+        std::cout << "NASM assembling of Print Int failed" << std::endl;
+        exit(1);
+    }
+#endif
+
+#ifdef _WIN32
+    int ret = system("nasm -f win64 target/prog.asm");
     if (ret != 0) {
         std::cerr << "NASM assembling failed" << std::endl;
         exit(1);
     }
 
-    ret = system(
-        "GoLink /console /entry _start prog.obj user32.dll kernel32.dll");
+    ret = system("GoLink /console /entry _start target/prog.obj user32.dll "
+                 "kernel32.dll");
     if (ret != 0) {
         std::cerr << "Linking Failed" << std::endl;
         exit(1);
@@ -101,13 +122,13 @@ int main(int argc, char *argv[]) {
 
 #else
     // Linux Code for ELF64 files
-    int ret = system("nasm -felf64 prog.asm -o prog.o");
+    int ret = system("nasm -felf64 target/prog.asm -o target/prog.o");
     if (ret != 0) {
         std::cerr << "NASM assembling failed" << std::endl;
         exit(1);
     }
 
-    ret = system("ld prog.o CMakeFiles/runtime.dir/runtime/linux/print_int_linux.asm.o -o prog");
+    ret = system("ld target/prog.o build/print_int.o -o target/prog");
     if (ret != 0) {
         std::cerr << "Linking Failed" << std::endl;
         exit(1);

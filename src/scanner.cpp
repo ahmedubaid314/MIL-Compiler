@@ -38,8 +38,6 @@ Scanner::Scanner() {
 
     m_dfa[1][map_char('_')] = 1;
 
-
-
     // INT LITERALS
 
     for (int i = 0; i <= 9; i++) {
@@ -121,8 +119,10 @@ std::vector<Token> Scanner::scan_src(const std::string &src) const {
             exit(1);
         }
 
-        if (getType(current_token, last_accept_state) == TokenType::INT_LIT && !fitsInt32(current_token)) {
-            std::cerr << "OVERFLOW ERROR: Integer must be a 32bit value" << std::endl;
+        if (getType(current_token, last_accept_state) == TokenType::INT_LIT &&
+            !fitsInt32(current_token)) {
+            std::cerr << "OVERFLOW ERROR: Integer must be a 32bit value"
+                      << std::endl;
             exit(1);
         }
 
@@ -132,8 +132,7 @@ std::vector<Token> Scanner::scan_src(const std::string &src) const {
     }
 
     token_list.push_back(
-        Token{.type=TokenType::_EOF, .contents = std::string()}
-    );
+        Token{.type = TokenType::_EOF, .contents = std::string()});
 
     return token_list;
 }
@@ -219,7 +218,7 @@ TokenType Scanner::isKeyword(const std::string &identifier) const {
     if (identifier == "kill") {
         return TokenType::_KILL;
     } else if (identifier == "let") {
-        return  TokenType::_LET;
+        return TokenType::_LET;
     } else if (identifier == "print") {
         return TokenType::_PRINT;
     }
@@ -227,12 +226,13 @@ TokenType Scanner::isKeyword(const std::string &identifier) const {
     return TokenType::_IDENTIFIER;
 }
 
-
-bool Scanner::fitsInt32(const std::string& number) const {
+bool Scanner::fitsInt32(const std::string &number) const {
     const std::string MAX_VALUE = "2147483647";
 
-    if (number.size() < MAX_VALUE.size()) return true;
-    if (number.size() > MAX_VALUE.size()) return false;
+    if (number.size() < MAX_VALUE.size())
+        return true;
+    if (number.size() > MAX_VALUE.size())
+        return false;
 
     return number <= MAX_VALUE;
 }

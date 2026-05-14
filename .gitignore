@@ -1,21 +1,14 @@
 # Build directories
 build/
+target/
 cmake-build-debug/
 cmake-build-release/
 cmake-build-*/
 
-# Compiled object files and executables
-*.o
-*.a
-*.so
-*.dylib
-*.exe
-
-# CMake generated files
+# CMake (legacy, can remove after fully migrating to Makefile)
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
-Makefile
 *.cmake
 
 # IDE/Editor files
@@ -26,10 +19,9 @@ Makefile
 *~
 .DS_Store
 
-# Build outputs
-compiler
-prog
-prog.asm
-*.out
+# OS files
+.DS_Store
+Thumbs.db
 
-/test
+# Test/temporary files
+test.mil

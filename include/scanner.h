@@ -36,8 +36,9 @@ inline std::ostream &operator<<(std::ostream &os, TokenType t) {
         return os << "*";
     case TokenType::_PRINT:
         return os << "print";
+    default:
+        return os << "ERROR";
     }
-    return os << "<unexpected token>";
 }
 
 class Scanner {
