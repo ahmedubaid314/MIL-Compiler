@@ -1,6 +1,6 @@
 # Comparisons
 
-Comparison operators. Lowest precedence in expressions.
+Comparison operators.
 
 $$
 \text{\_CEXPR} \to \text{\_AEXPR \_CEXPR\_R} \\
@@ -20,6 +20,6 @@ Example: `1 + 2 < 3 * 4` evaluates `(1 + 2)` and `(3 * 4)`, then compares: `3 < 
 
 **Next:** [Arithmetic](arithmetic.md) — See what operands look like (arithmetic expressions)
 
-**Previous:** [Expressions](expressions.md)
+**Previous:** [Logical](logical.md)
 
 **See Also:** [Factors](factors.md) for base values
