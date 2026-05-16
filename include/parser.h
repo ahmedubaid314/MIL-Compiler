@@ -2,6 +2,7 @@
 #include "ast/stmt_node.h"
 #include "scanner.h"
 
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -20,6 +21,8 @@ class Parser {
     stmt_list parse_STMT_LIST();
 
     std::unique_ptr<expr_node> parse_EXPR();
+    std::unique_ptr<expr_node> parse_CEXPR();
+    std::unique_ptr<expr_node> parse_CEXPR_R(std::unique_ptr<expr_node> left);
     std::unique_ptr<expr_node> parse_AEXPR();
     std::unique_ptr<expr_node> parse_AEXPR_R(std::unique_ptr<expr_node> left);
     std::unique_ptr<expr_node> parse_TERM();

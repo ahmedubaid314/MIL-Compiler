@@ -1,5 +1,52 @@
 #include "../include/ast/expr_node.h"
 #include "../include/ast/stmt_node.h"
+#include <ostream>
+
+namespace expr_helper {
+
+bool is_comparison(TokenType op) {
+    return op == TokenType::_LT || op == TokenType::_GT || op == TokenType::_LE || op == TokenType::_GE || op == TokenType::_EQ || op == TokenType::_NE;
+}
+
+void emit_comparison(std::ostream &out, TokenType op) {
+    out << "    CMP rax, rbx\n";
+
+    std::string set_instr;
+    if (op == TokenType::_LT)
+        set_instr = "SETL";
+    else if (op == TokenType::_GT)
+        set_instr = "SETG";
+    else if (op == TokenType::_LE)
+        set_instr = "SETLE";
+    else if (op == TokenType::_GE)
+        set_instr = "SETGE";
+    else if (op == TokenType::_EQ)
+        set_instr = "SETE";
+    else if (op == TokenType::_NE)
+        set_instr = "SETNE";
+
+    out << "    " << set_instr << " al\n";
+    out << "    MOVZX rax, al\n";
+}
+
+bool is_arithmetic(TokenType op) {
+    return op == TokenType::_PLUS || op == TokenType::_MINUS || op == TokenType::_MULT || op == TokenType::_DIV;
+}
+
+void emit_arithmetic(std::ostream &out, TokenType op) {
+    if (op == TokenType::_PLUS) {
+        out << "    ADD rax, rbx\n";
+    } else if (op == TokenType::_MINUS) {
+        out << "    SUB rax, rbx\n";
+    } else if (op == TokenType::_MULT) {
+        out << "    IMUL rax, rbx\n";
+    } else if (op == TokenType::_DIV) {
+        out << "    CQO\n";
+        out << "    IDIV rbx\n";
+    }
+}
+
+} // namespace expr_helper
 
 expr_node::~expr_node() {}
 stmt_node::~stmt_node() {}
@@ -28,15 +75,10 @@ void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node> &expr, std:
 
         codegen_expr_node(out, bin->left, var_table);
         out << "    POP rbx\n";
-        if (bin->_operator == TokenType::_PLUS) {
-            out << "    ADD rax, rbx\n";
-        } else if (bin->_operator == TokenType::_MINUS) {
-            out << "    SUB rax, rbx\n";
-        } else if (bin->_operator == TokenType::_MULT) {
-            out << "    IMUL rax, rbx\n";
-        } else if (bin->_operator == TokenType::_DIV) {
-            out << "    CQO\n";
-            out << "    IDIV rbx\n";
+        if (expr_helper::is_arithmetic(bin->_operator)) {
+            expr_helper::emit_arithmetic(out, bin->_operator);
+        } else if (expr_helper::is_comparison(bin->_operator)) {
+            expr_helper::emit_comparison(out, bin->_operator);
         }
     }
 }

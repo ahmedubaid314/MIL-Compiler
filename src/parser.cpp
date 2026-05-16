@@ -1,6 +1,7 @@
 #include "../include/parser.h"
 
 #include <iostream>
+#include <memory>
 #include <optional>
 
 Parser::Parser(std::vector<Token> *t) {
@@ -22,7 +23,24 @@ Token Parser::scan_token() {
 }
 
 std::unique_ptr<expr_node> Parser::parse_EXPR() {
-    return parse_AEXPR();
+    return parse_CEXPR();
+}
+
+std::unique_ptr<expr_node> Parser::parse_CEXPR() {
+    auto left = parse_AEXPR();
+
+    return parse_CEXPR_R(std::move(left));
+}
+
+std::unique_ptr<expr_node> Parser::parse_CEXPR_R(std::unique_ptr<expr_node> left) {
+    while (peek_type() == TokenType::_LT || peek_type() == TokenType::_GT || peek_type() == TokenType::_LE ||
+           peek_type() == TokenType::_GE || peek_type() == TokenType::_EQ || peek_type() == TokenType::_NE) {
+        Token op = scan_token();
+        auto right = parse_AEXPR();
+
+        left = std::make_unique<binary_expr_node>(op.type, std::move(left), std::move(right));
+    }
+    return left;
 }
 
 std::unique_ptr<expr_node> Parser::parse_AEXPR() {

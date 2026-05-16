@@ -14,6 +14,12 @@ enum class TokenType {
     _MINUS,
     _MULT,
     _DIV,
+    _LT,
+    _GT,
+    _LE,
+    _GE,
+    _EQ,
+    _NE,
     _PRINT,
     _EOF
 };

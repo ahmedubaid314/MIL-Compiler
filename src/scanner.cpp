@@ -57,6 +57,12 @@ Scanner::Scanner() {
     m_dfa[0][map_char('-')] = 3;
     m_dfa[0][map_char('*')] = 3;
     m_dfa[0][map_char('/')] = 3;
+    m_dfa[0][map_char('<')] = 3;
+    m_dfa[0][map_char('>')] = 3;
+    m_dfa[0][map_char('!')] = 3;
+
+    // TWO CHAR
+    m_dfa[3][map_char('=')] = 4;
 }
 
 std::vector<Token> Scanner::scan_src(const std::string &src) const {
@@ -168,13 +174,19 @@ int Scanner::map_char(char c) const {
         return 69;
     case '/':
         return 70;
+    case '<':
+        return 71;
+    case '>':
+        return 72;
+    case '!':
+        return 73;
     default:
         return -1;
     }
 }
 
 bool Scanner::is_accept_state(const int state) const {
-    if (state > 0 && state <= 3) //  1-3 are accept states
+    if (state > 0 && state <= 4) //  1-4 are accept states
         return true;
     else
         return false;
@@ -207,6 +219,22 @@ TokenType Scanner::getType(const std::string &accept_state,
             return TokenType::_MULT;
         } else if (accept_state == "/") {
             return TokenType::_DIV;
+        } else if (accept_state == "<") {
+            return TokenType::_LT;
+        } else if (accept_state == ">") {
+            return TokenType::_GT;
+        }
+    }
+
+    if (last_accept_state == 4) {
+        if (accept_state == "<=") {
+            return TokenType::_LE;
+        } else if (accept_state == ">=") {
+            return TokenType::_GE;
+        } else if (accept_state == "==") {
+            return TokenType::_EQ;
+        } else if (accept_state == "!=") {
+            return TokenType::_NE;
         }
     }
 
