@@ -1,6 +1,0 @@
-Current Alphabet (in order of index):
-- Numbers (0 - 9)
-- All standard english alphabet
-- Parenthesis: (, )
-- Semicolon: ;
-- Equals to sign: =
