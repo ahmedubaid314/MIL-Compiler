@@ -20,6 +20,8 @@ enum class TokenType {
     _GE,
     _EQ,
     _NE,
+    _LAND,
+    _LOR,
     _PRINT,
     _EOF
 };
@@ -27,4 +29,8 @@ enum class TokenType {
 struct Token {
     TokenType type;
     std::string contents; // stores data if required, else NULL
+};
+
+struct label_counter {
+    int logical_circuit = 0;
 };

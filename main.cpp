@@ -8,6 +8,7 @@
 
 #include "include/parser.h"
 #include "include/scanner.h"
+#include "include/types.h"
 
 #include <unordered_map>
 
@@ -83,9 +84,10 @@ int main(int argc, char *argv[]) {
 
     std::unordered_map<std::string, int> var_table;
     int var_count = 0;
+    label_counter lb_count;
 
     for (auto &stmt : ast) {
-        stmt->codegen(asm_file, var_table, var_count);
+        stmt->codegen(asm_file, var_table, var_count, lb_count);
     }
     asm_file << "ret";
     asm_file.close();

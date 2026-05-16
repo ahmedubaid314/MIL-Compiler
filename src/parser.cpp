@@ -23,7 +23,21 @@ Token Parser::scan_token() {
 }
 
 std::unique_ptr<expr_node> Parser::parse_EXPR() {
-    return parse_CEXPR();
+    return parse_LEXPR();
+}
+
+std::unique_ptr<expr_node> Parser::parse_LEXPR() {
+    auto left = parse_CEXPR();
+    return parse_LEXPR_R(std::move(left));
+}
+
+std::unique_ptr<expr_node> Parser::parse_LEXPR_R(std::unique_ptr<expr_node> left) {
+    while (peek_type() == TokenType::_LAND || peek_type() == TokenType::_LOR) {
+        Token op = scan_token();
+        auto right = parse_CEXPR();
+        left = std::make_unique<binary_expr_node>(op.type, std::move(left), std::move(right));
+    }
+    return left;
 }
 
 std::unique_ptr<expr_node> Parser::parse_CEXPR() {

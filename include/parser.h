@@ -21,6 +21,8 @@ class Parser {
     stmt_list parse_STMT_LIST();
 
     std::unique_ptr<expr_node> parse_EXPR();
+    std::unique_ptr<expr_node> parse_LEXPR();
+    std::unique_ptr<expr_node> parse_LEXPR_R(std::unique_ptr<expr_node> left);
     std::unique_ptr<expr_node> parse_CEXPR();
     std::unique_ptr<expr_node> parse_CEXPR_R(std::unique_ptr<expr_node> left);
     std::unique_ptr<expr_node> parse_AEXPR();

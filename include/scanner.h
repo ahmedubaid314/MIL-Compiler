@@ -6,7 +6,7 @@
 #include <vector>
 
 #define DFA_MAX_STATES 5
-#define DFA_MAX_ALPHABET 74
+#define DFA_MAX_ALPHABET 76
 
 inline std::ostream &operator<<(std::ostream &os, TokenType t) {
     switch (t) {
@@ -48,6 +48,10 @@ inline std::ostream &operator<<(std::ostream &os, TokenType t) {
         return os << "==";
     case TokenType::_NE:
         return os << "!=";
+    case TokenType::_LAND:
+        return os << "&&";
+    case TokenType::_LOR:
+        return os << "||";
     default:
         return os << "ERROR";
     }

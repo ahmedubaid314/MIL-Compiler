@@ -1,6 +1,53 @@
-
-
 #include "../include/scanner.h"
+#include <string>
+
+namespace scanner_helpers {
+TokenType emit_state_3(const std::string &accept_state) {
+    if (accept_state == "(") {
+        return TokenType::LPAREN;
+    } else if (accept_state == ")") {
+        return TokenType::RPAREN;
+    } else if (accept_state == ";") {
+        return TokenType::_SEMICOLON;
+    } else if (accept_state == "=") {
+        return TokenType::_EQUALS;
+    } else if (accept_state == "+") {
+        return TokenType::_PLUS;
+    } else if (accept_state == "-") {
+        return TokenType::_MINUS;
+    } else if (accept_state == "*") {
+        return TokenType::_MULT;
+    } else if (accept_state == "/") {
+        return TokenType::_DIV;
+    } else if (accept_state == "<") {
+        return TokenType::_LT;
+    } else if (accept_state == ">") {
+        return TokenType::_GT;
+    }
+
+    std::cerr << "UNIDENTIFIED STATE 3 TOKEN" << std::endl;
+    exit(1);
+}
+
+TokenType emit_state_4(const std::string &accept_state) {
+    if (accept_state == "<=") {
+        return TokenType::_LE;
+    } else if (accept_state == ">=") {
+        return TokenType::_GE;
+    } else if (accept_state == "==") {
+        return TokenType::_EQ;
+    } else if (accept_state == "!=") {
+        return TokenType::_NE;
+    } else if (accept_state == "&&") {
+        return TokenType::_LAND;
+    } else if (accept_state == "||") {
+        return TokenType::_LOR;
+    }
+    std::cerr << "UNIDENTIFIED STATE 4 TOKEN" << std::endl;
+    exit(1);
+}
+
+} // namespace scanner_helpers
 
 // Public
 
@@ -60,9 +107,13 @@ Scanner::Scanner() {
     m_dfa[0][map_char('<')] = 3;
     m_dfa[0][map_char('>')] = 3;
     m_dfa[0][map_char('!')] = 3;
+    m_dfa[0][map_char('&')] = 3;
+    m_dfa[0][map_char('|')] = 3;
 
     // TWO CHAR
     m_dfa[3][map_char('=')] = 4;
+    m_dfa[3][map_char('&')] = 4;
+    m_dfa[3][map_char('|')] = 4;
 }
 
 std::vector<Token> Scanner::scan_src(const std::string &src) const {
@@ -180,6 +231,10 @@ int Scanner::map_char(char c) const {
         return 72;
     case '!':
         return 73;
+    case '&':
+        return 74;
+    case '|':
+        return 75;
     default:
         return -1;
     }
@@ -203,39 +258,11 @@ TokenType Scanner::getType(const std::string &accept_state,
     }
 
     if (last_accept_state == 3) {
-        if (accept_state == "(") {
-            return TokenType::LPAREN;
-        } else if (accept_state == ")") {
-            return TokenType::RPAREN;
-        } else if (accept_state == ";") {
-            return TokenType::_SEMICOLON;
-        } else if (accept_state == "=") {
-            return TokenType::_EQUALS;
-        } else if (accept_state == "+") {
-            return TokenType::_PLUS;
-        } else if (accept_state == "-") {
-            return TokenType::_MINUS;
-        } else if (accept_state == "*") {
-            return TokenType::_MULT;
-        } else if (accept_state == "/") {
-            return TokenType::_DIV;
-        } else if (accept_state == "<") {
-            return TokenType::_LT;
-        } else if (accept_state == ">") {
-            return TokenType::_GT;
-        }
+        return scanner_helpers::emit_state_3(accept_state);
     }
 
     if (last_accept_state == 4) {
-        if (accept_state == "<=") {
-            return TokenType::_LE;
-        } else if (accept_state == ">=") {
-            return TokenType::_GE;
-        } else if (accept_state == "==") {
-            return TokenType::_EQ;
-        } else if (accept_state == "!=") {
-            return TokenType::_NE;
-        }
+        return scanner_helpers::emit_state_4(accept_state);
     }
 
     std::cerr << "UNEXPECTED TOKEN GENERATED" << std::endl;

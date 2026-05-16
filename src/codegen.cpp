@@ -1,6 +1,9 @@
 #include "../include/ast/expr_node.h"
 #include "../include/ast/stmt_node.h"
+#include <memory>
 #include <ostream>
+#include <string>
+#include <unordered_map>
 
 namespace expr_helper {
 
@@ -46,12 +49,36 @@ void emit_arithmetic(std::ostream &out, TokenType op) {
     }
 }
 
+bool is_logical(TokenType op) {
+    return op == TokenType::_LAND || op == TokenType::_LOR;
+}
+
+void emit_logical(std::ostream &out, TokenType op, std::unique_ptr<expr_node> &right, std::unordered_map<std::string, int> &var_table, label_counter &lb_count) {
+    std::string skip_label = "skip_" + std::to_string(lb_count.logical_circuit);
+    std::string end_label = "end_" + std::to_string(lb_count.logical_circuit++);
+
+    if (op == TokenType::_LAND) {
+        out << "  TEST rax, rax\n";
+        out << "  JZ " << skip_label << "\n";
+    } else {
+        out << "  TEST rax, rax\n";
+        out << "  JNZ " << skip_label << "\n";
+    }
+
+    codegen_expr_node(out, right, var_table, lb_count);
+    out << "  TEST rax, rax\n";
+    out << "  SETNZ al\n";
+    out << "  MOVZX rax, al\n";
+    out << skip_label << ":\n";
+    return;
+}
+
 } // namespace expr_helper
 
 expr_node::~expr_node() {}
 stmt_node::~stmt_node() {}
 
-void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node> &expr, std::unordered_map<std::string, int> &var_table) {
+void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node> &expr, std::unordered_map<std::string, int> &var_table, label_counter &lb_count) {
 
     if (auto int_node = dynamic_cast<int_literal_node *>(expr.get())) {
         out << "    mov rax, " << int_node->value << std::endl;
@@ -70,23 +97,34 @@ void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node> &expr, std:
     }
 
     if (auto bin = dynamic_cast<binary_expr_node *>(expr.get())) {
-        codegen_expr_node(out, bin->right, var_table);
+
+        if (expr_helper::is_logical(bin->_operator)) {
+            codegen_expr_node(out, bin->left, var_table, lb_count);
+            expr_helper::emit_logical(out, bin->_operator, bin->right, var_table, lb_count);
+            return;
+        }
+
+        codegen_expr_node(out, bin->right, var_table, lb_count);
         out << "    PUSH rax\n";
 
-        codegen_expr_node(out, bin->left, var_table);
+        codegen_expr_node(out, bin->left, var_table, lb_count);
         out << "    POP rbx\n";
+
         if (expr_helper::is_arithmetic(bin->_operator)) {
+
             expr_helper::emit_arithmetic(out, bin->_operator);
+
         } else if (expr_helper::is_comparison(bin->_operator)) {
+
             expr_helper::emit_comparison(out, bin->_operator);
         }
     }
 }
 
 // -- KILL STATEMENT NODE --
-void killstmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count) {
+void killstmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) {
 
-    codegen_expr_node(out, expr, var_table);
+    codegen_expr_node(out, expr, var_table, lb_count);
 
 #ifdef _WIN32
     out << "    mov rcx, rax\n";
@@ -100,7 +138,7 @@ void killstmt_node::codegen(std::ostream &out, std::unordered_map<std::string, i
 
 // -- DECLARE STATEMENT NODE --
 
-void decl_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count) {
+void decl_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) {
     int offset = -8 * (var_count + 1);
     if (var_table.find(name) != var_table.end()) {
         std::cerr << "Variable " << name << " is being redefined"
@@ -110,13 +148,13 @@ void decl_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, 
     var_table[name] = var_count;
     var_count++;
 
-    codegen_expr_node(out, expr, var_table);
+    codegen_expr_node(out, expr, var_table, lb_count);
     out << "    mov [rbp " << offset << "], rax\n";
 }
 
 // -- ASSIGN STATEMENT NODE --
 
-void assign_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count) {
+void assign_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) {
 
     if (var_table.find(name) == var_table.end()) {
         std::cerr << "Variable " << name << " is not defined" << std::endl;
@@ -126,13 +164,13 @@ void assign_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string
     int slot = var_table[name];
     int offset = -8 * (slot + 1);
 
-    codegen_expr_node(out, expr, var_table);
+    codegen_expr_node(out, expr, var_table, lb_count);
     out << "    mov [rbp " << offset << "], rax\n";
 }
 
 // -- PRINT STATEMENT NODE --
 
-void print_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count) {
-    codegen_expr_node(out, expr, var_table);
+void print_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) {
+    codegen_expr_node(out, expr, var_table, lb_count);
     out << "    CALL print_int\n";
 }
