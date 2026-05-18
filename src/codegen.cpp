@@ -73,6 +73,28 @@ void emit_logical(std::ostream &out, TokenType op, std::unique_ptr<expr_node> &r
     return;
 }
 
+bool is_bitwise(TokenType op) {
+    return op == TokenType::_BAND || op == TokenType::_BOR || op == TokenType::_XOR || op == TokenType::_LSHIFT || op == TokenType::_RSHIFT;
+}
+
+// TODO: Might need to save RCX for loops
+void emit_bitwise(std::ostream &out, TokenType op) {
+
+    if (op == TokenType::_BAND) {
+        out << "  AND rax, rbx\n";
+    } else if (op == TokenType::_BOR) {
+        out << "  OR rax, rbx\n";
+    } else if (op == TokenType::_XOR) {
+        out << "  XOR rax, rbx\n";
+    } else if (op == TokenType::_LSHIFT) {
+        out << "  MOV cl, bl\n";
+        out << "  SHL rax, cl\n";
+    } else if (op == TokenType::_RSHIFT) {
+        out << "  MOV cl, bl\n";
+        out << "  SHR rax, cl\n";
+    }
+}
+
 } // namespace expr_helper
 
 expr_node::~expr_node() {}
@@ -110,7 +132,11 @@ void codegen_binary_expr_node(std::ostream &out, binary_expr_node *bin, std::uno
     codegen_expr_node(out, bin->left, var_table, lb_count);
     out << "    POP rbx\n";
 
-    if (expr_helper::is_arithmetic(bin->_operator)) {
+    if (expr_helper::is_bitwise(bin->_operator)) {
+
+        expr_helper::emit_bitwise(out, bin->_operator);
+
+    } else if (expr_helper::is_arithmetic(bin->_operator)) {
 
         expr_helper::emit_arithmetic(out, bin->_operator);
 
@@ -129,6 +155,8 @@ void codegen_unary_expr_node(std::ostream &out, unary_expr_node *unary, std::uno
         out << "  MOVZX rax, al\n";
     } else if (unary->_operator == TokenType::_MINUS) {
         out << "  NEG rax\n";
+    } else if (unary->_operator == TokenType::_BNOT) {
+        out << "   NOT rax\n";
     }
 }
 
@@ -152,7 +180,7 @@ void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node> &expr, std:
 }
 
 // -- KILL STATEMENT NODE --
-void killstmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) {
+void killstmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) {
 
     codegen_expr_node(out, expr, var_table, lb_count);
 
@@ -184,7 +212,7 @@ void decl_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, 
 
 // -- ASSIGN STATEMENT NODE --
 
-void assign_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) {
+void assign_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) {
 
     if (var_table.find(name) == var_table.end()) {
         std::cerr << "Variable " << name << " is not defined" << std::endl;
@@ -200,7 +228,7 @@ void assign_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string
 
 // -- PRINT STATEMENT NODE --
 
-void print_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) {
+void print_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) {
     codegen_expr_node(out, expr, var_table, lb_count);
     out << "    CALL print_int\n";
 }

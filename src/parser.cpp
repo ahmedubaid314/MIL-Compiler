@@ -41,7 +41,7 @@ std::unique_ptr<expr_node> Parser::parse_LEXPR_R(std::unique_ptr<expr_node> left
 }
 
 std::unique_ptr<expr_node> Parser::parse_CEXPR() {
-    auto left = parse_AEXPR();
+    auto left = parse_BOR();
 
     return parse_CEXPR_R(std::move(left));
 }
@@ -49,6 +49,73 @@ std::unique_ptr<expr_node> Parser::parse_CEXPR() {
 std::unique_ptr<expr_node> Parser::parse_CEXPR_R(std::unique_ptr<expr_node> left) {
     while (peek_type() == TokenType::_LT || peek_type() == TokenType::_GT || peek_type() == TokenType::_LE ||
            peek_type() == TokenType::_GE || peek_type() == TokenType::_EQ || peek_type() == TokenType::_NE) {
+        Token op = scan_token();
+        auto right = parse_BOR();
+
+        left = std::make_unique<binary_expr_node>(op.type, std::move(left), std::move(right));
+    }
+    return left;
+}
+
+std::unique_ptr<expr_node> Parser::parse_BOR() {
+    auto left = parse_XOR();
+
+    return parse_BOR_R(std::move(left));
+}
+
+std::unique_ptr<expr_node> Parser::parse_BOR_R(std::unique_ptr<expr_node> left) {
+    while (peek_type() == TokenType::_BOR) {
+        Token op = scan_token();
+        auto right = parse_XOR();
+
+        left = std::make_unique<binary_expr_node>(op.type, std::move(left), std::move(right));
+    }
+
+    return left;
+}
+
+std::unique_ptr<expr_node> Parser::parse_XOR() {
+    auto left = parse_BAND();
+
+    return parse_XOR_R(std::move(left));
+}
+
+std::unique_ptr<expr_node> Parser::parse_XOR_R(std::unique_ptr<expr_node> left) {
+    while (peek_type() == TokenType::_XOR) {
+        Token op = scan_token();
+        auto right = parse_BAND();
+
+        left = std::make_unique<binary_expr_node>(op.type, std::move(left), std::move(right));
+    }
+
+    return left;
+}
+
+std::unique_ptr<expr_node> Parser::parse_BAND() {
+    auto left = parse_SHIFT();
+
+    return parse_BAND_R(std::move(left));
+}
+
+std::unique_ptr<expr_node> Parser::parse_BAND_R(std::unique_ptr<expr_node> left) {
+    while (peek_type() == TokenType::_BAND) {
+        Token op = scan_token();
+        auto right = parse_SHIFT();
+
+        left = std::make_unique<binary_expr_node>(op.type, std::move(left), std::move(right));
+    }
+
+    return left;
+}
+
+std::unique_ptr<expr_node> Parser::parse_SHIFT() {
+    auto left = parse_AEXPR();
+
+    return parse_SHIFT_R(std::move(left));
+}
+
+std::unique_ptr<expr_node> Parser::parse_SHIFT_R(std::unique_ptr<expr_node> left) {
+    while (peek_type() == TokenType::_LSHIFT || peek_type() == TokenType::_RSHIFT) {
         Token op = scan_token();
         auto right = parse_AEXPR();
 
@@ -97,7 +164,7 @@ std::unique_ptr<expr_node> Parser::parse_FACTOR() {
 std::unique_ptr<expr_node> Parser::parse_UNARY() {
     Token t = scan_token();
 
-    if (t.type == TokenType::_MINUS || t.type == TokenType::_NOT) {
+    if (t.type == TokenType::_MINUS || t.type == TokenType::_NOT || t.type == TokenType::_BNOT) {
         return std::make_unique<unary_expr_node>(t.type, std::move(parse_UNARY()));
     }
 

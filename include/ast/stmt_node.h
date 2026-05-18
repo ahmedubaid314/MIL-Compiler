@@ -11,7 +11,7 @@ struct killstmt_node : stmt_node {
     std::unique_ptr<expr_node> expr;
 
     explicit killstmt_node(std::unique_ptr<expr_node> e) : expr(std::move(e)) {}
-    void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) override;
+    void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) override;
 };
 
 struct decl_stmt_node : stmt_node {
@@ -27,12 +27,12 @@ struct assign_stmt_node : stmt_node {
     std::unique_ptr<expr_node> expr;
 
     explicit assign_stmt_node(std::string n, std::unique_ptr<expr_node> e) : name(std::move(n)), expr(std::move(e)) {}
-    void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) override;
+    void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) override;
 };
 
 struct print_stmt_node : stmt_node {
     std::unique_ptr<expr_node> expr;
 
     explicit print_stmt_node(std::unique_ptr<expr_node> e) : expr(std::move(e)) {}
-    void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) override;
+    void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) override;
 };

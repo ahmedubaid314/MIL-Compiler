@@ -25,6 +25,14 @@ TokenType emit_state_3(const std::string &accept_state) {
         return TokenType::_GT;
     } else if (accept_state == "!") {
         return TokenType::_NOT;
+    } else if (accept_state == "&") {
+        return TokenType::_BAND;
+    } else if (accept_state == "|") {
+        return TokenType::_BOR;
+    } else if (accept_state == "^") {
+        return TokenType::_XOR;
+    } else if (accept_state == "~") {
+        return TokenType::_BNOT;
     }
 
     std::cerr << "UNIDENTIFIED STATE 3 TOKEN" << std::endl;
@@ -44,6 +52,10 @@ TokenType emit_state_4(const std::string &accept_state) {
         return TokenType::_LAND;
     } else if (accept_state == "||") {
         return TokenType::_LOR;
+    } else if (accept_state == "<<") {
+        return TokenType::_LSHIFT;
+    } else if (accept_state == ">>") {
+        return TokenType::_RSHIFT;
     }
     std::cerr << "UNIDENTIFIED STATE 4 TOKEN" << std::endl;
     exit(1);
@@ -111,11 +123,15 @@ Scanner::Scanner() {
     m_dfa[0][map_char('!')] = 3;
     m_dfa[0][map_char('&')] = 3;
     m_dfa[0][map_char('|')] = 3;
+    m_dfa[0][map_char('^')] = 3;
+    m_dfa[0][map_char('~')] = 3;
 
     // TWO CHAR
     m_dfa[3][map_char('=')] = 4;
     m_dfa[3][map_char('&')] = 4;
     m_dfa[3][map_char('|')] = 4;
+    m_dfa[3][map_char('<')] = 4;
+    m_dfa[3][map_char('>')] = 4;
 }
 
 std::vector<Token> Scanner::scan_src(const std::string &src) const {
@@ -237,6 +253,10 @@ int Scanner::map_char(char c) const {
         return 74;
     case '|':
         return 75;
+    case '~':
+        return 76;
+    case '^':
+        return 77;
     default:
         return -1;
     }

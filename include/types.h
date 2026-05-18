@@ -24,6 +24,12 @@ enum class TokenType {
     _LAND,
     _LOR,
     _NOT,
+    _XOR,
+    _BAND,
+    _BOR,
+    _BNOT,
+    _LSHIFT,
+    _RSHIFT,
     _PRINT,
     _EOF
 };
@@ -74,6 +80,18 @@ inline std::ostream &operator<<(std::ostream &os, TokenType t) {
         return os << "||";
     case TokenType::_NOT:
         return os << "!";
+    case TokenType::_XOR:
+        return os << "^";
+    case TokenType::_BAND:
+        return os << "&";
+    case TokenType::_BOR:
+        return os << "|";
+    case TokenType::_BNOT:
+        return os << "~";
+    case TokenType::_LSHIFT:
+        return os << "<<";
+    case TokenType::_RSHIFT:
+        return os << ">>";
     default:
         return os << "ERROR";
     }
