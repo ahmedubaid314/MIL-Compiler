@@ -75,11 +75,11 @@ Scanner::Scanner() {
 
     // Identifiers
 
-    for (char c = 'a'; c < 'z'; c++) {
+    for (char c = 'a'; c <= 'z'; c++) {
         m_dfa[0][map_char(c)] = 1;
     }
 
-    for (char c = 'A'; c < 'Z'; c++) {
+    for (char c = 'A'; c <= 'Z'; c++) {
         m_dfa[0][map_char(c)] = 1;
     }
 
@@ -89,11 +89,11 @@ Scanner::Scanner() {
         m_dfa[1][i] = 1;
     }
 
-    for (char c = 'a'; c < 'z'; c++) {
+    for (char c = 'a'; c <= 'z'; c++) {
         m_dfa[1][map_char(c)] = 1;
     }
 
-    for (char c = 'A'; c < 'Z'; c++) {
+    for (char c = 'A'; c <= 'Z'; c++) {
         m_dfa[1][map_char(c)] = 1;
     }
 
