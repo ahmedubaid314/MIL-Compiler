@@ -1,61 +1,11 @@
 #pragma once
 
 #include "types.h"
-#include <iostream>
 #include <string>
 #include <vector>
 
 #define DFA_MAX_STATES 5
 #define DFA_MAX_ALPHABET 76
-
-inline std::ostream &operator<<(std::ostream &os, TokenType t) {
-    switch (t) {
-    case TokenType::_KILL:
-        return os << "kill";
-    case TokenType::LPAREN:
-        return os << "'('";
-    case TokenType::RPAREN:
-        return os << "')'";
-    case TokenType::INT_LIT:
-        return os << "Integer Literal";
-    case TokenType::_SEMICOLON:
-        return os << "';'";
-    case TokenType::_EQUALS:
-        return os << "'='";
-    case TokenType::_IDENTIFIER:
-        return os << "Identifier";
-    case TokenType::_LET:
-        return os << "let";
-    case TokenType::_PLUS:
-        return os << "+";
-    case TokenType::_MINUS:
-        return os << "-";
-    case TokenType::_DIV:
-        return os << "/";
-    case TokenType::_MULT:
-        return os << "*";
-    case TokenType::_PRINT:
-        return os << "print";
-    case TokenType::_LT:
-        return os << "<";
-    case TokenType::_GT:
-        return os << ">";
-    case TokenType::_LE:
-        return os << "<=";
-    case TokenType::_GE:
-        return os << ">=";
-    case TokenType::_EQ:
-        return os << "==";
-    case TokenType::_NE:
-        return os << "!=";
-    case TokenType::_LAND:
-        return os << "&&";
-    case TokenType::_LOR:
-        return os << "||";
-    default:
-        return os << "ERROR";
-    }
-}
 
 class Scanner {
   public:

@@ -91,7 +91,15 @@ std::unique_ptr<expr_node> Parser::parse_TERM_R(std::unique_ptr<expr_node> left)
 }
 
 std::unique_ptr<expr_node> Parser::parse_FACTOR() {
+    return parse_UNARY();
+}
+
+std::unique_ptr<expr_node> Parser::parse_UNARY() {
     Token t = scan_token();
+
+    if (t.type == TokenType::_MINUS || t.type == TokenType::_NOT) {
+        return std::make_unique<unary_expr_node>(t.type, std::move(parse_UNARY()));
+    }
 
     if (t.type == TokenType::INT_LIT) {
         return std::make_unique<int_literal_node>(stoi(t.contents));

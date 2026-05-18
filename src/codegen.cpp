@@ -78,46 +78,76 @@ void emit_logical(std::ostream &out, TokenType op, std::unique_ptr<expr_node> &r
 expr_node::~expr_node() {}
 stmt_node::~stmt_node() {}
 
+void codegen_int_litr_node(std::ostream &out, const int_literal_node *int_node) {
+
+    out << "    mov rax, " << int_node->value << std::endl;
+    return;
+}
+
+void codegen_ident_node(std::ostream &out, const ident_node *ident, std::unordered_map<std::string, int> &var_table) {
+
+    if (var_table.find(ident->name) == var_table.end()) {
+        std::cerr << "Variable " << ident->name << " not declared" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    int ident_offset = -8 * (var_table.at(ident->name) + 1);
+    out << "    mov rax, [rbp " << ident_offset << "]\n";
+    return;
+}
+
+void codegen_binary_expr_node(std::ostream &out, binary_expr_node *bin, std::unordered_map<std::string, int> &var_table, label_counter &lb_count) {
+
+    if (expr_helper::is_logical(bin->_operator)) {
+        codegen_expr_node(out, bin->left, var_table, lb_count);
+        expr_helper::emit_logical(out, bin->_operator, bin->right, var_table, lb_count);
+        return;
+    }
+
+    codegen_expr_node(out, bin->right, var_table, lb_count);
+    out << "    PUSH rax\n";
+
+    codegen_expr_node(out, bin->left, var_table, lb_count);
+    out << "    POP rbx\n";
+
+    if (expr_helper::is_arithmetic(bin->_operator)) {
+
+        expr_helper::emit_arithmetic(out, bin->_operator);
+
+    } else if (expr_helper::is_comparison(bin->_operator)) {
+
+        expr_helper::emit_comparison(out, bin->_operator);
+    }
+}
+
+void codegen_unary_expr_node(std::ostream &out, unary_expr_node *unary, std::unordered_map<std::string, int> &var_table, label_counter &lb_count) {
+    codegen_expr_node(out, unary->unary, var_table, lb_count);
+
+    if (unary->_operator == TokenType::_NOT) {
+        out << "  TEST rax, rax\n";
+        out << "  SETZ al\n";
+        out << "  MOVZX rax, al\n";
+    } else if (unary->_operator == TokenType::_MINUS) {
+        out << "  NEG rax\n";
+    }
+}
+
 void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node> &expr, std::unordered_map<std::string, int> &var_table, label_counter &lb_count) {
 
     if (auto int_node = dynamic_cast<int_literal_node *>(expr.get())) {
-        out << "    mov rax, " << int_node->value << std::endl;
-        return;
+        codegen_int_litr_node(out, int_node);
     }
 
     if (auto ident = dynamic_cast<ident_node *>(expr.get())) {
-        if (var_table.find(ident->name) == var_table.end()) {
-            std::cerr << "Variable " << ident->name << " not declared" << std::endl;
-            exit(EXIT_FAILURE);
-        }
-
-        int ident_offset = -8 * (var_table.at(ident->name) + 1);
-        out << "    mov rax, [rbp " << ident_offset << "]\n";
-        return;
+        codegen_ident_node(out, ident, var_table);
     }
 
     if (auto bin = dynamic_cast<binary_expr_node *>(expr.get())) {
+        codegen_binary_expr_node(out, bin, var_table, lb_count);
+    }
 
-        if (expr_helper::is_logical(bin->_operator)) {
-            codegen_expr_node(out, bin->left, var_table, lb_count);
-            expr_helper::emit_logical(out, bin->_operator, bin->right, var_table, lb_count);
-            return;
-        }
-
-        codegen_expr_node(out, bin->right, var_table, lb_count);
-        out << "    PUSH rax\n";
-
-        codegen_expr_node(out, bin->left, var_table, lb_count);
-        out << "    POP rbx\n";
-
-        if (expr_helper::is_arithmetic(bin->_operator)) {
-
-            expr_helper::emit_arithmetic(out, bin->_operator);
-
-        } else if (expr_helper::is_comparison(bin->_operator)) {
-
-            expr_helper::emit_comparison(out, bin->_operator);
-        }
+    if (auto unary = dynamic_cast<unary_expr_node *>(expr.get())) {
+        codegen_unary_expr_node(out, unary, var_table, lb_count);
     }
 }
 

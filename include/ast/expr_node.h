@@ -25,4 +25,14 @@ struct binary_expr_node : expr_node {
     explicit binary_expr_node(TokenType o, std::unique_ptr<expr_node> l, std::unique_ptr<expr_node> r) : _operator(o), left(std::move(l)), right(std::move(r)) {}
 };
 
+struct unary_expr_node : expr_node {
+    TokenType _operator;
+    std::unique_ptr<expr_node> unary;
+    explicit unary_expr_node(TokenType o, std::unique_ptr<expr_node> u) : _operator(o), unary(std::move(u)) {}
+};
+
 void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node> &expr, std::unordered_map<std::string, int> &var_table, label_counter &lb_count);
+void codegen_int_litr_node(std::ostream &out, const int_literal_node *int_node);
+void codegen_ident_node(std::ostream &out, const ident_node *ident, std::unordered_map<std::string, int> &var_table);
+void codegen_binary_expr_node(std::ostream &out, binary_expr_node *expr, std::unordered_map<std::string, int> &var_table, label_counter &lb_count);
+void codegen_unary_expr_node(std::ostream &out, unary_expr_node *unary, std::unordered_map<std::string, int> &var_table, label_counter &lb_count);

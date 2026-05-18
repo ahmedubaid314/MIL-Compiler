@@ -23,6 +23,8 @@ TokenType emit_state_3(const std::string &accept_state) {
         return TokenType::_LT;
     } else if (accept_state == ">") {
         return TokenType::_GT;
+    } else if (accept_state == "!") {
+        return TokenType::_NOT;
     }
 
     std::cerr << "UNIDENTIFIED STATE 3 TOKEN" << std::endl;
