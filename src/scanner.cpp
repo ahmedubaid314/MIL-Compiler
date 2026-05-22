@@ -139,11 +139,21 @@ std::vector<Token> Scanner::scan_src(const std::string &src) const {
     std::vector<Token> token_list;
 
     size_t index = 0;
+    size_t line_tracker = 0;
+    size_t line_start_tracker = 0;
 
     while (index < src.length()) {
         char c = src.at(index);
 
         // skip whitespaces
+
+        if (c == '\n') {
+            line_tracker++;
+            line_start_tracker = index + 1;
+            index++;
+            continue;
+        }
+
         if (std::isspace(c)) {
             index++;
             continue;
@@ -175,7 +185,7 @@ std::vector<Token> Scanner::scan_src(const std::string &src) const {
                 break;
             c = src.at(index);
 
-            if (isspace(c))
+            if (std::isspace(c))
                 break;
 
         } while (index < src.length());
@@ -203,11 +213,13 @@ std::vector<Token> Scanner::scan_src(const std::string &src) const {
 
         token_list.push_back(
             Token{.type = getType(current_token, last_accept_state),
-                  .contents = current_token});
+                  .contents = current_token,
+                  .line_number = line_tracker,
+                  .column = start - line_start_tracker});
     }
 
     token_list.push_back(
-        Token{.type = TokenType::_EOF, .contents = std::string()});
+        Token{.type = TokenType::_EOF, .contents = std::string(), .line_number = line_tracker, .column = 0});
 
     return token_list;
 }

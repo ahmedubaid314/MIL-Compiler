@@ -4,9 +4,10 @@
 #include <memory>
 #include <optional>
 
-Parser::Parser(std::vector<Token> *t) {
+Parser::Parser(std::vector<Token> *t, ErrorReporter e) {
     m_tokens = t;
     m_index = 0;
+    reporter = e;
 }
 
 using stmt_list = std::vector<std::unique_ptr<stmt_node>>;
@@ -173,7 +174,7 @@ std::unique_ptr<expr_node> Parser::parse_UNARY() {
     }
 
     if (t.type == TokenType::_IDENTIFIER) {
-        return std::make_unique<ident_node>(t.contents);
+        return std::make_unique<ident_node>(t);
     }
 
     if (t.type == TokenType::LPAREN) {
@@ -184,13 +185,14 @@ std::unique_ptr<expr_node> Parser::parse_UNARY() {
         }
     }
 
-    std::cerr << "PARSE ERROR:\nExpected Term Node" << std::endl;
+    reporter.unexpected_token(t);
     exit(1);
 }
 
 std::unique_ptr<stmt_node> Parser::parse_STMT() {
     Token t = scan_token();
     if (t.type == TokenType::_KILL) {
+
         expect_token(TokenType::LPAREN);
         std::unique_ptr<expr_node> value = parse_EXPR();
         expect_token(TokenType::RPAREN);
@@ -199,25 +201,29 @@ std::unique_ptr<stmt_node> Parser::parse_STMT() {
         return std::make_unique<killstmt_node>(std::move(value));
     } else if (t.type == TokenType::_LET) {
         t = expect_token(TokenType::_IDENTIFIER);
-        std::string name = t.contents;
         expect_token(TokenType::_EQUALS);
         std::unique_ptr<expr_node> value = parse_EXPR();
         expect_token(TokenType::_SEMICOLON);
 
-        return std::make_unique<decl_stmt_node>(std::move(name), std::move(value));
+        return std::make_unique<decl_stmt_node>(t, std::move(value));
     } else if (t.type == TokenType::_IDENTIFIER) {
+
         expect_token(TokenType::_EQUALS);
         std::unique_ptr<expr_node> value = parse_EXPR();
         expect_token(TokenType::_SEMICOLON);
-        return std::make_unique<assign_stmt_node>(std::move(t.contents), std::move(value));
+        return std::make_unique<assign_stmt_node>(t, std::move(value));
+
     } else if (t.type == TokenType::_PRINT) {
+
         expect_token(TokenType::LPAREN);
         std::unique_ptr<expr_node> value = parse_EXPR();
         expect_token(TokenType::RPAREN);
         expect_token(TokenType::_SEMICOLON);
         return std::make_unique<print_stmt_node>(std::move(value));
+
     } else {
-        std::cerr << "PARSE ERROR:\nExpected Kill or Let Tokens" << std::endl;
+
+        reporter.unexpected_token(t);
         exit(1);
     }
 }
@@ -245,7 +251,7 @@ stmt_list Parser::parse_STMT_LIST() {
 Token Parser::expect_token(const TokenType t) {
     Token st = scan_token();
     if (st.type != t) {
-        std::cerr << "PARSE ERROR:\nExpected Token " << t << std::endl;
+        reporter.expected_token(st, t);
         exit(1);
     }
     return st;

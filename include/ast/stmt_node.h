@@ -1,4 +1,5 @@
 #pragma once
+#include "../error_reporter.h"
 #include "expr_node.h"
 #include <iostream>
 
@@ -15,18 +16,18 @@ struct killstmt_node : stmt_node {
 };
 
 struct decl_stmt_node : stmt_node {
-    std::string name;
+    Token token;
     std::unique_ptr<expr_node> expr;
 
-    explicit decl_stmt_node(std::string n, std::unique_ptr<expr_node> e) : name(std::move(n)), expr(std::move(e)) {}
+    explicit decl_stmt_node(Token t, std::unique_ptr<expr_node> e) : token(t), expr(std::move(e)) {}
     void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) override;
 };
 
 struct assign_stmt_node : stmt_node {
-    std::string name;
+    Token token;
     std::unique_ptr<expr_node> expr;
 
-    explicit assign_stmt_node(std::string n, std::unique_ptr<expr_node> e) : name(std::move(n)), expr(std::move(e)) {}
+    explicit assign_stmt_node(Token t, std::unique_ptr<expr_node> e) : token(t), expr(std::move(e)) {}
     void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) override;
 };
 

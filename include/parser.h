@@ -1,5 +1,6 @@
 #pragma once
 #include "ast/stmt_node.h"
+#include "error_reporter.h"
 #include "scanner.h"
 
 #include <memory>
@@ -8,7 +9,7 @@
 
 class Parser {
   public:
-    explicit Parser(std::vector<Token> *t);
+    explicit Parser(std::vector<Token> *t, ErrorReporter e);
 
     using stmt_list = std::vector<std::unique_ptr<stmt_node>>;
     stmt_list parse_PROG();
@@ -54,4 +55,5 @@ class Parser {
     Token expect_token(TokenType t);
 
     std::optional<TokenType> peek_type();
+    ErrorReporter reporter;
 };

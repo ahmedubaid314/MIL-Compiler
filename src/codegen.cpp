@@ -1,5 +1,6 @@
 #include "../include/ast/expr_node.h"
 #include "../include/ast/stmt_node.h"
+#include "../include/error_reporter.h"
 #include <memory>
 #include <ostream>
 #include <string>
@@ -108,12 +109,12 @@ void codegen_int_litr_node(std::ostream &out, const int_literal_node *int_node) 
 
 void codegen_ident_node(std::ostream &out, const ident_node *ident, std::unordered_map<std::string, int> &var_table) {
 
-    if (var_table.find(ident->name) == var_table.end()) {
-        std::cerr << "Variable " << ident->name << " not declared" << std::endl;
+    if (var_table.find(ident->token.contents) == var_table.end()) {
+        ErrorReporter::undefined_var(ident->token);
         exit(EXIT_FAILURE);
     }
 
-    int ident_offset = -8 * (var_table.at(ident->name) + 1);
+    int ident_offset = -8 * (var_table.at(ident->token.contents) + 1);
     out << "    mov rax, [rbp " << ident_offset << "]\n";
     return;
 }
@@ -198,12 +199,11 @@ void killstmt_node::codegen(std::ostream &out, std::unordered_map<std::string, i
 
 void decl_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) {
     int offset = -8 * (var_count + 1);
-    if (var_table.find(name) != var_table.end()) {
-        std::cerr << "Variable " << name << " is being redefined"
-                  << std::endl;
+    if (var_table.find(token.contents) != var_table.end()) {
+        ErrorReporter::redeclared_variable(token);
         exit(1);
     }
-    var_table[name] = var_count;
+    var_table[token.contents] = var_count;
     var_count++;
 
     codegen_expr_node(out, expr, var_table, lb_count);
@@ -214,12 +214,12 @@ void decl_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, 
 
 void assign_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) {
 
-    if (var_table.find(name) == var_table.end()) {
-        std::cerr << "Variable " << name << " is not defined" << std::endl;
+    if (var_table.find(token.contents) == var_table.end()) {
+        ErrorReporter::undefined_var(token);
         exit(1);
     }
 
-    int slot = var_table[name];
+    int slot = var_table[token.contents];
     int offset = -8 * (slot + 1);
 
     codegen_expr_node(out, expr, var_table, lb_count);

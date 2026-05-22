@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "include/error_reporter.h"
 #include "include/parser.h"
 #include "include/scanner.h"
 #include "include/types.h"
@@ -35,13 +36,23 @@ int main(int argc, char *argv[]) {
 
     std::string src = out.str();
 
+    std::vector<std::string> source_lines;
+    std::istringstream stream(src);
+    std::string line;
+    while (getline(stream, line)) {
+        source_lines.push_back(line);
+    }
+
+    file.close();
+
     Scanner scanner;
 
     std::vector<Token> tokenList = scanner.scan_src(src);
 
-    std::cout << "Code was successfully scanned" << std::endl;
+    ErrorReporter reporter;
+    reporter.set_source(&source_lines);
 
-    Parser parser(&tokenList);
+    Parser parser(&tokenList, reporter);
 
     using stmt_list = std::vector<std::unique_ptr<stmt_node>>;
     stmt_list ast = parser.parse_PROG();

@@ -100,6 +100,8 @@ inline std::ostream &operator<<(std::ostream &os, TokenType t) {
 struct Token {
     TokenType type;
     std::string contents; // stores data if required, else NULL
+    size_t line_number;
+    size_t column;
 };
 
 struct label_counter {

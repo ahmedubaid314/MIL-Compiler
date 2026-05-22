@@ -1,4 +1,5 @@
 #pragma once
+#include "../error_reporter.h"
 #include "../types.h"
 #include <memory>
 #include <unordered_map>
@@ -14,9 +15,9 @@ struct int_literal_node : expr_node {
 };
 
 struct ident_node : expr_node {
-    std::string name;
+    Token token;
 
-    explicit ident_node(std::string n) : name(std::move(n)) {}
+    explicit ident_node(Token t) : token(t) {}
 };
 
 struct binary_expr_node : expr_node {
