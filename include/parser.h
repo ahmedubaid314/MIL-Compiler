@@ -19,7 +19,7 @@ class Parser {
     size_t m_index;
 
     std::unique_ptr<stmt_node> parse_STMT();
-    stmt_list parse_STMT_LIST();
+    stmt_list parse_STMT_LIST(bool _global = true);
 
     // Expression Start
     std::unique_ptr<expr_node> parse_EXPR();

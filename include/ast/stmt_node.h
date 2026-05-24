@@ -2,6 +2,8 @@
 #include "../error_reporter.h"
 #include "expr_node.h"
 #include <iostream>
+#include <memory>
+#include <vector>
 
 struct stmt_node {
     virtual ~stmt_node();
@@ -35,5 +37,12 @@ struct print_stmt_node : stmt_node {
     std::unique_ptr<expr_node> expr;
 
     explicit print_stmt_node(std::unique_ptr<expr_node> e) : expr(std::move(e)) {}
+    void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) override;
+};
+
+struct block_stmt_node : stmt_node {
+    std::vector<std::unique_ptr<stmt_node>> stmt_list;
+
+    explicit block_stmt_node(std::vector<std::unique_ptr<stmt_node>> list) : stmt_list(std::move(list)) {}
     void codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) override;
 };

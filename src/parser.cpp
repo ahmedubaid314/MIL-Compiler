@@ -165,6 +165,23 @@ std::unique_ptr<expr_node> Parser::parse_FACTOR() {
 std::unique_ptr<expr_node> Parser::parse_UNARY() {
     Token t = scan_token();
 
+    // For identifiers with scope resolution operators
+    int res_count = 0;
+    if (t.type == TokenType::_SCOPERES) {
+        res_count++;
+        while (peek_type() == TokenType::_SCOPERES) {
+            res_count++;
+            t = scan_token();
+        }
+
+        if (t.type == TokenType::_IDENTIFIER) {
+            return std::make_unique<ident_node>(t, res_count);
+        } else {
+            reporter.unexpected_token(t);
+            exit(1);
+        }
+    }
+
     if (t.type == TokenType::_MINUS || t.type == TokenType::_NOT || t.type == TokenType::_BNOT) {
         return std::make_unique<unary_expr_node>(t.type, std::move(parse_UNARY()));
     }
@@ -191,6 +208,7 @@ std::unique_ptr<expr_node> Parser::parse_UNARY() {
 
 std::unique_ptr<stmt_node> Parser::parse_STMT() {
     Token t = scan_token();
+
     if (t.type == TokenType::_KILL) {
 
         expect_token(TokenType::LPAREN);
@@ -221,6 +239,11 @@ std::unique_ptr<stmt_node> Parser::parse_STMT() {
         expect_token(TokenType::_SEMICOLON);
         return std::make_unique<print_stmt_node>(std::move(value));
 
+    } else if (t.type == TokenType::_LCURLY) {
+        auto stmt_list = parse_STMT_LIST(false);
+        expect_token(TokenType::_RCURLY);
+        return std::make_unique<block_stmt_node>(std::move(stmt_list));
+
     } else {
 
         reporter.unexpected_token(t);
@@ -228,19 +251,19 @@ std::unique_ptr<stmt_node> Parser::parse_STMT() {
     }
 }
 
-stmt_list Parser::parse_STMT_LIST() {
+stmt_list Parser::parse_STMT_LIST(bool _global) {
     stmt_list list;
 
-    if (peek_type() != TokenType::_KILL && peek_type() != TokenType::_LET && peek_type() != TokenType::_PRINT) {
+    if (peek_type() != TokenType::_KILL && peek_type() != TokenType::_LET && peek_type() != TokenType::_PRINT && peek_type() != TokenType::_LCURLY) {
         std::cerr << "Error: Expected Statement" << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    while (peek_type() == TokenType::_KILL || peek_type() == TokenType::_LET || peek_type() == TokenType::_IDENTIFIER || peek_type() == TokenType::_PRINT) {
+    while (peek_type() == TokenType::_KILL || peek_type() == TokenType::_LET || peek_type() == TokenType::_IDENTIFIER || peek_type() == TokenType::_PRINT || peek_type() == TokenType::_LCURLY) {
         list.push_back(parse_STMT());
     }
 
-    if (peek_type() != TokenType::_EOF) {
+    if (_global && peek_type() != TokenType::_EOF) {
         std::cerr << "Unexpected/Unidentified Token Detected" << std::endl;
         exit(EXIT_FAILURE);
     }

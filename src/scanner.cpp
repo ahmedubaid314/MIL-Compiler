@@ -33,6 +33,12 @@ TokenType emit_state_3(const std::string &accept_state) {
         return TokenType::_XOR;
     } else if (accept_state == "~") {
         return TokenType::_BNOT;
+    } else if (accept_state == "{") {
+        return TokenType::_LCURLY;
+    } else if (accept_state == "}") {
+        return TokenType::_RCURLY;
+    } else if (accept_state == "$") {
+        return TokenType::_SCOPERES;
     }
 
     std::cerr << "UNIDENTIFIED STATE 3 TOKEN" << std::endl;
@@ -125,6 +131,9 @@ Scanner::Scanner() {
     m_dfa[0][map_char('|')] = 3;
     m_dfa[0][map_char('^')] = 3;
     m_dfa[0][map_char('~')] = 3;
+    m_dfa[0][map_char('{')] = 3;
+    m_dfa[0][map_char('}')] = 3;
+    m_dfa[0][map_char('$')] = 3;
 
     // TWO CHAR
     m_dfa[3][map_char('=')] = 4;
@@ -269,6 +278,12 @@ int Scanner::map_char(char c) const {
         return 76;
     case '^':
         return 77;
+    case '{':
+        return 78;
+    case '}':
+        return 79;
+    case '$':
+        return 80;
     default:
         return -1;
     }

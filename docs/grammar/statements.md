@@ -8,7 +8,8 @@ $$
 \text{\_STMT} \to \text{kill(\_EXPR);} \\
 \text{\_STMT} \to \text{let IDENT = \_EXPR;} \\
 \text{\_STMT} \to \text{IDENT = \_EXPR;} \\
-\text{\_STMT} \to \text{print(\_EXPR);}
+\text{\_STMT} \to \text{print(\_EXPR);} \\ 
+\text{\_STMT} \to \text{\{\_STMT\_LIST\}}
 $$
 
 ## Details

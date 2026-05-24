@@ -31,6 +31,9 @@ enum class TokenType {
     _LSHIFT,
     _RSHIFT,
     _PRINT,
+    _LCURLY,
+    _RCURLY,
+    _SCOPERES,
     _EOF
 };
 
@@ -92,6 +95,12 @@ inline std::ostream &operator<<(std::ostream &os, TokenType t) {
         return os << "<<";
     case TokenType::_RSHIFT:
         return os << ">>";
+    case TokenType::_LCURLY:
+        return os << "{";
+    case TokenType::_RCURLY:
+        return os << "}";
+    case TokenType::_SCOPERES:
+        return os << "$";
     default:
         return os << "ERROR";
     }

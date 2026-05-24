@@ -5,7 +5,7 @@
 #include <vector>
 
 #define DFA_MAX_STATES 5
-#define DFA_MAX_ALPHABET 78
+#define DFA_MAX_ALPHABET 81
 
 class Scanner {
   public:

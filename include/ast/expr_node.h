@@ -16,8 +16,9 @@ struct int_literal_node : expr_node {
 
 struct ident_node : expr_node {
     Token token;
+    int scope_depth;
 
-    explicit ident_node(Token t) : token(t) {}
+    explicit ident_node(Token t, int depth = 0) : token(t), scope_depth(depth) {}
 };
 
 struct binary_expr_node : expr_node {
