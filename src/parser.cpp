@@ -171,15 +171,11 @@ std::unique_ptr<expr_node> Parser::parse_UNARY() {
         res_count++;
         while (peek_type() == TokenType::_SCOPERES) {
             res_count++;
-            t = scan_token();
+            scan_token();
         }
 
-        if (t.type == TokenType::_IDENTIFIER) {
-            return std::make_unique<ident_node>(t, res_count);
-        } else {
-            reporter.unexpected_token(t);
-            exit(1);
-        }
+        t = expect_token(TokenType::_IDENTIFIER);
+        return std::make_unique<ident_node>(t, res_count);
     }
 
     if (t.type == TokenType::_MINUS || t.type == TokenType::_NOT || t.type == TokenType::_BNOT) {

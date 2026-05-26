@@ -9,9 +9,15 @@ void scope_handler::remove_scope() {
     scope_stack.pop_back();
 }
 
-void scope_handler::add_var(std::string name) {
-    int offset = -8 * (scope_stack.back().size() + 1);
+int scope_handler::add_var(std::string name) {
+    int total_var = 0;
+    for (auto &scope : scope_stack) {
+        total_var += scope.size();
+    }
+
+    int offset = -8 * (total_var + 1);
     scope_stack.back()[name] = offset;
+    return offset;
 }
 
 std::optional<int> scope_handler::get_var(std::string var_name, int depth) {

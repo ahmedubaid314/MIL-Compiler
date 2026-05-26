@@ -1,19 +1,31 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
+#include "include/ast/stmt_node.h"
 #include "include/error_reporter.h"
 #include "include/parser.h"
 #include "include/scanner.h"
+#include "include/scope_handler.h"
 #include "include/types.h"
 
-#include <unordered_map>
-
 namespace fs = std::filesystem;
+
+int count_declarations(const std::vector<std::unique_ptr<stmt_node>> &stmts) {
+    int count = 0;
+    for (auto &stmt : stmts) {
+        if (dynamic_cast<decl_stmt_node *>(stmt.get())) {
+            count++;
+        } else if (auto block_stmt = dynamic_cast<block_stmt_node *>(stmt.get())) {
+            count += count_declarations(block_stmt->stmt_list);
+        }
+    }
+    return count;
+}
 
 int main(int argc, char *argv[]) {
     if (argc == 1) {
@@ -57,13 +69,7 @@ int main(int argc, char *argv[]) {
     using stmt_list = std::vector<std::unique_ptr<stmt_node>>;
     stmt_list ast = parser.parse_PROG();
 
-    int stack_size = 0;
-    for (auto &stmt : ast) {
-        auto decl_stmt = dynamic_cast<decl_stmt_node *>(stmt.get());
-        if (decl_stmt) {
-            stack_size++;
-        }
-    }
+    int stack_size = count_declarations(ast);
 
     stack_size *= 8;
 
@@ -93,13 +99,15 @@ int main(int argc, char *argv[]) {
     asm_file << "   sub rsp, " << stack_size << std::endl;
 #endif
 
-    std::unordered_map<std::string, int> var_table;
-    int var_count = 0;
     label_counter lb_count;
+    scope_handler scope_;
+    scope_.add_scope();
 
     for (auto &stmt : ast) {
-        stmt->codegen(asm_file, var_table, var_count, lb_count);
+
+        stmt->codegen(asm_file, scope_, lb_count);
     }
+    scope_.remove_scope();
     asm_file << "ret";
     asm_file.close();
 

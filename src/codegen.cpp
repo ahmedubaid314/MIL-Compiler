@@ -4,7 +4,6 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <unordered_map>
 
 namespace expr_helper {
 
@@ -54,7 +53,7 @@ bool is_logical(TokenType op) {
     return op == TokenType::_LAND || op == TokenType::_LOR;
 }
 
-void emit_logical(std::ostream &out, TokenType op, std::unique_ptr<expr_node> &right, std::unordered_map<std::string, int> &var_table, label_counter &lb_count) {
+void emit_logical(std::ostream &out, TokenType op, std::unique_ptr<expr_node> &right, scope_handler &scope_, label_counter &lb_count) {
     std::string skip_label = "skip_" + std::to_string(lb_count.logical_circuit);
     std::string end_label = "end_" + std::to_string(lb_count.logical_circuit++);
 
@@ -66,7 +65,7 @@ void emit_logical(std::ostream &out, TokenType op, std::unique_ptr<expr_node> &r
         out << "  JNZ " << skip_label << "\n";
     }
 
-    codegen_expr_node(out, right, var_table, lb_count);
+    codegen_expr_node(out, right, scope_, lb_count);
     out << "  TEST rax, rax\n";
     out << "  SETNZ al\n";
     out << "  MOVZX rax, al\n";
@@ -107,30 +106,31 @@ void codegen_int_litr_node(std::ostream &out, const int_literal_node *int_node) 
     return;
 }
 
-void codegen_ident_node(std::ostream &out, const ident_node *ident, std::unordered_map<std::string, int> &var_table) {
+void codegen_ident_node(std::ostream &out, const ident_node *ident, scope_handler &scope_) {
 
-    if (var_table.find(ident->token.contents) == var_table.end()) {
+    auto offset = scope_.get_var(ident->token.contents, ident->scope_depth);
+    if (!offset.has_value()) {
         ErrorReporter::undefined_var(ident->token);
         exit(EXIT_FAILURE);
     }
 
-    int ident_offset = -8 * (var_table.at(ident->token.contents) + 1);
+    int ident_offset = offset.value();
     out << "    mov rax, [rbp " << ident_offset << "]\n";
     return;
 }
 
-void codegen_binary_expr_node(std::ostream &out, binary_expr_node *bin, std::unordered_map<std::string, int> &var_table, label_counter &lb_count) {
+void codegen_binary_expr_node(std::ostream &out, binary_expr_node *bin, scope_handler &scope_, label_counter &lb_count) {
 
     if (expr_helper::is_logical(bin->_operator)) {
-        codegen_expr_node(out, bin->left, var_table, lb_count);
-        expr_helper::emit_logical(out, bin->_operator, bin->right, var_table, lb_count);
+        codegen_expr_node(out, bin->left, scope_, lb_count);
+        expr_helper::emit_logical(out, bin->_operator, bin->right, scope_, lb_count);
         return;
     }
 
-    codegen_expr_node(out, bin->right, var_table, lb_count);
+    codegen_expr_node(out, bin->right, scope_, lb_count);
     out << "    PUSH rax\n";
 
-    codegen_expr_node(out, bin->left, var_table, lb_count);
+    codegen_expr_node(out, bin->left, scope_, lb_count);
     out << "    POP rbx\n";
 
     if (expr_helper::is_bitwise(bin->_operator)) {
@@ -147,8 +147,8 @@ void codegen_binary_expr_node(std::ostream &out, binary_expr_node *bin, std::uno
     }
 }
 
-void codegen_unary_expr_node(std::ostream &out, unary_expr_node *unary, std::unordered_map<std::string, int> &var_table, label_counter &lb_count) {
-    codegen_expr_node(out, unary->unary, var_table, lb_count);
+void codegen_unary_expr_node(std::ostream &out, unary_expr_node *unary, scope_handler &scope_, label_counter &lb_count) {
+    codegen_expr_node(out, unary->unary, scope_, lb_count);
 
     if (unary->_operator == TokenType::_NOT) {
         out << "  TEST rax, rax\n";
@@ -161,29 +161,29 @@ void codegen_unary_expr_node(std::ostream &out, unary_expr_node *unary, std::uno
     }
 }
 
-void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node> &expr, std::unordered_map<std::string, int> &var_table, label_counter &lb_count) {
+void codegen_expr_node(std::ostream &out, std::unique_ptr<expr_node> &expr, scope_handler &scope_, label_counter &lb_count) {
 
     if (auto int_node = dynamic_cast<int_literal_node *>(expr.get())) {
         codegen_int_litr_node(out, int_node);
     }
 
     if (auto ident = dynamic_cast<ident_node *>(expr.get())) {
-        codegen_ident_node(out, ident, var_table);
+        codegen_ident_node(out, ident, scope_);
     }
 
     if (auto bin = dynamic_cast<binary_expr_node *>(expr.get())) {
-        codegen_binary_expr_node(out, bin, var_table, lb_count);
+        codegen_binary_expr_node(out, bin, scope_, lb_count);
     }
 
     if (auto unary = dynamic_cast<unary_expr_node *>(expr.get())) {
-        codegen_unary_expr_node(out, unary, var_table, lb_count);
+        codegen_unary_expr_node(out, unary, scope_, lb_count);
     }
 }
 
 // -- KILL STATEMENT NODE --
-void killstmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) {
+void killstmt_node::codegen(std::ostream &out, scope_handler &scope_, label_counter &lb_count) {
 
-    codegen_expr_node(out, expr, var_table, lb_count);
+    codegen_expr_node(out, expr, scope_, lb_count);
 
 #ifdef _WIN32
     out << "    mov rcx, rax\n";
@@ -197,38 +197,47 @@ void killstmt_node::codegen(std::ostream &out, std::unordered_map<std::string, i
 
 // -- DECLARE STATEMENT NODE --
 
-void decl_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int &var_count, label_counter &lb_count) {
-    int offset = -8 * (var_count + 1);
-    if (var_table.find(token.contents) != var_table.end()) {
+void decl_stmt_node::codegen(std::ostream &out, scope_handler &scope_, label_counter &lb_count) {
+
+    if (scope_.var_exists_curr_scope(token.contents) == true) {
         ErrorReporter::redeclared_variable(token);
         exit(1);
     }
-    var_table[token.contents] = var_count;
-    var_count++;
+    int offset = scope_.add_var(token.contents);
 
-    codegen_expr_node(out, expr, var_table, lb_count);
+    codegen_expr_node(out, expr, scope_, lb_count);
     out << "    mov [rbp " << offset << "], rax\n";
 }
 
 // -- ASSIGN STATEMENT NODE --
 
-void assign_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) {
+void assign_stmt_node::codegen(std::ostream &out, scope_handler &scope_, label_counter &lb_count) {
 
-    if (var_table.find(token.contents) == var_table.end()) {
+    auto o = scope_.get_var(token.contents);
+    if (!o.has_value()) {
         ErrorReporter::undefined_var(token);
         exit(1);
     }
 
-    int slot = var_table[token.contents];
-    int offset = -8 * (slot + 1);
+    int offset = o.value();
 
-    codegen_expr_node(out, expr, var_table, lb_count);
+    codegen_expr_node(out, expr, scope_, lb_count);
     out << "    mov [rbp " << offset << "], rax\n";
 }
 
 // -- PRINT STATEMENT NODE --
 
-void print_stmt_node::codegen(std::ostream &out, std::unordered_map<std::string, int> &var_table, int & /*var_count*/, label_counter &lb_count) {
-    codegen_expr_node(out, expr, var_table, lb_count);
+void print_stmt_node::codegen(std::ostream &out, scope_handler &scope_, label_counter &lb_count) {
+    codegen_expr_node(out, expr, scope_, lb_count);
     out << "    CALL print_int\n";
+}
+
+// -- BLOCK STATEMENT NODE --
+
+void block_stmt_node::codegen(std::ostream &out, scope_handler &scope_, label_counter &lb_count) {
+    scope_.add_scope();
+    for (auto &stmt : stmt_list) {
+        stmt->codegen(out, scope_, lb_count);
+    }
+    scope_.remove_scope();
 }
