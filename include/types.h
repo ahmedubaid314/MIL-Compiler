@@ -34,6 +34,8 @@ enum class TokenType {
     _LCURLY,
     _RCURLY,
     _SCOPERES,
+    _IF,
+    _ELSE,
     _EOF
 };
 
@@ -101,6 +103,10 @@ inline std::ostream &operator<<(std::ostream &os, TokenType t) {
         return os << "}";
     case TokenType::_SCOPERES:
         return os << "$";
+    case TokenType::_IF:
+        return os << "if";
+    case TokenType::_ELSE:
+        return os << "else";
     default:
         return os << "ERROR";
     }
@@ -115,4 +121,5 @@ struct Token {
 
 struct label_counter {
     int logical_circuit = 0;
+    int if_stmt = 0;
 };

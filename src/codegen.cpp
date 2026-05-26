@@ -241,3 +241,21 @@ void block_stmt_node::codegen(std::ostream &out, scope_handler &scope_, label_co
     }
     scope_.remove_scope();
 }
+
+// -- IF STATEMENT NODE --
+
+void if_stmt_node::codegen(std::ostream &out, scope_handler &scope_, label_counter &lb_count) {
+    codegen_expr_node(out, condition, scope_, lb_count);
+
+    std::string else_block_label = "else_block_" + std::to_string(lb_count.if_stmt);
+    std::string end_if_block_label = "end_if_block_" + std::to_string(lb_count.if_stmt++);
+    out << "  TEST rax, rax" << std::endl;
+    out << "  JZ " << else_block_label << std::endl;
+    if_block->codegen(out, scope_, lb_count);
+    out << "  JMP " << end_if_block_label << std::endl;
+    out << else_block_label << ":" << std::endl;
+    if (else_block) {
+        else_block->codegen(out, scope_, lb_count);
+    }
+    out << end_if_block_label << ":" << std::endl;
+}

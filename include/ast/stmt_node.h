@@ -47,3 +47,13 @@ struct block_stmt_node : stmt_node {
     explicit block_stmt_node(std::vector<std::unique_ptr<stmt_node>> list) : stmt_list(std::move(list)) {}
     void codegen(std::ostream &out, scope_handler &scope_, label_counter &lb_count) override;
 };
+
+struct if_stmt_node : stmt_node {
+
+    std::unique_ptr<expr_node> condition;
+    std::unique_ptr<block_stmt_node> if_block;
+    std::unique_ptr<block_stmt_node> else_block;
+
+    explicit if_stmt_node(std::unique_ptr<expr_node> c, std::unique_ptr<block_stmt_node> i, std::unique_ptr<block_stmt_node> e) : condition(std::move(c)), if_block(std::move(i)), else_block(std::move(e)) {}
+    void codegen(std::ostream &out, scope_handler &scope_, label_counter &lb_count) override;
+};

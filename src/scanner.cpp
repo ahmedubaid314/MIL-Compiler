@@ -325,6 +325,10 @@ TokenType Scanner::isKeyword(const std::string &identifier) const {
         return TokenType::_LET;
     } else if (identifier == "print") {
         return TokenType::_PRINT;
+    } else if (identifier == "if") {
+        return TokenType::_IF;
+    } else if (identifier == "else") {
+        return TokenType::_ELSE;
     }
 
     return TokenType::_IDENTIFIER;

@@ -1,5 +1,6 @@
 #include "../include/parser.h"
 
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -240,6 +241,35 @@ std::unique_ptr<stmt_node> Parser::parse_STMT() {
         expect_token(TokenType::_RCURLY);
         return std::make_unique<block_stmt_node>(std::move(stmt_list));
 
+    } else if (t.type == TokenType::_IF) {
+        expect_token(TokenType::LPAREN);
+        std::unique_ptr<expr_node> condition = parse_EXPR();
+        expect_token(TokenType::RPAREN);
+        expect_token(TokenType::_LCURLY);
+        auto if_stmts = parse_STMT_LIST(false);
+        expect_token(TokenType::_RCURLY);
+        if (peek_type() == TokenType::_ELSE) {
+            scan_token();
+
+            if (peek_type() == TokenType::_IF) {
+                auto inner_if_stmt = parse_STMT();
+                stmt_list else_ifs;
+                else_ifs.push_back(std::move(inner_if_stmt));
+                auto else_block = std::make_unique<block_stmt_node>(std::move(else_ifs));
+                auto if_block = std::make_unique<block_stmt_node>(std::move(if_stmts));
+                return std::make_unique<if_stmt_node>(std::move(condition), std::move(if_block), std::move(else_block));
+            }
+
+            expect_token(TokenType::_LCURLY);
+            auto else_stmts = parse_STMT_LIST(false);
+            expect_token(TokenType::_RCURLY);
+            auto if_block = std::make_unique<block_stmt_node>(std::move(if_stmts));
+            auto else_block = std::make_unique<block_stmt_node>(std::move(else_stmts));
+            return std::make_unique<if_stmt_node>(std::move(condition), std::move(if_block), std::move(else_block));
+        }
+
+        auto if_block = std::make_unique<block_stmt_node>(std::move(if_stmts));
+        return std::make_unique<if_stmt_node>(std::move(condition), std::move(if_block), nullptr);
     } else {
 
         reporter.unexpected_token(t);
@@ -247,15 +277,32 @@ std::unique_ptr<stmt_node> Parser::parse_STMT() {
     }
 }
 
+bool Parser::is_start_stmt_token() {
+    auto t = peek_type();
+    if (!t)
+        return false;
+    switch (*t) {
+    case TokenType::_KILL:
+    case TokenType::_LET:
+    case TokenType::_IDENTIFIER:
+    case TokenType::_PRINT:
+    case TokenType::_LCURLY:
+    case TokenType::_IF:
+        return true;
+    default:
+        return false;
+    }
+}
+
 stmt_list Parser::parse_STMT_LIST(bool _global) {
     stmt_list list;
 
-    if (peek_type() != TokenType::_KILL && peek_type() != TokenType::_LET && peek_type() != TokenType::_PRINT && peek_type() != TokenType::_LCURLY) {
+    if (!is_start_stmt_token()) {
         std::cerr << "Error: Expected Statement" << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    while (peek_type() == TokenType::_KILL || peek_type() == TokenType::_LET || peek_type() == TokenType::_IDENTIFIER || peek_type() == TokenType::_PRINT || peek_type() == TokenType::_LCURLY) {
+    while (is_start_stmt_token()) {
         list.push_back(parse_STMT());
     }
 

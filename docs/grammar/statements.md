@@ -9,7 +9,8 @@ $$
 \text{\_STMT} \to \text{let IDENT = \_EXPR;} \\
 \text{\_STMT} \to \text{IDENT = \_EXPR;} \\
 \text{\_STMT} \to \text{print(\_EXPR);} \\ 
-\text{\_STMT} \to \text{\{\_STMT\_LIST\}}
+\text{\_STMT} \to \text{\{\_STMT\_LIST\}} \\ 
+\text{\_STMT} \to \text{if (\_EXPR)\{\_STMT\_LIST\} [else if (\_EXPR) \{\_STMT\_LIST\}]* [else \{\_STMT\_LIST\}}] \\ 
 $$
 
 ## Details
@@ -21,6 +22,8 @@ $$
   - `let ident = expr` — declare and initialize variable
   - `ident = expr` — assign to existing variable
   - `print(expr)` — output integer to stdout
+  - `{stmt_list}` —  create a new block of code with new scope
+  - `if-else if-else` — typical if else branching
 
 All statements end with `;`.
 

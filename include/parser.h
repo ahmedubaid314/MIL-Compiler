@@ -2,6 +2,7 @@
 #include "ast/stmt_node.h"
 #include "error_reporter.h"
 #include "scanner.h"
+#include "types.h"
 
 #include <memory>
 #include <optional>
@@ -56,4 +57,6 @@ class Parser {
 
     std::optional<TokenType> peek_type();
     ErrorReporter reporter;
+
+    bool is_start_stmt_token();
 };
